@@ -309,6 +309,16 @@
                                     required
                                 ></lightning-input>
                             </div>
+                            <div class="form-col">
+                                <lightning-input
+                                    type="text"
+                                    label="Name On UPI"
+                                    value={paymentData.nameOnUpi}
+                                    data-field="nameOnUpi"
+                                    onchange={handlePaymentFieldChange}
+                                    required
+                                ></lightning-input>
+                            </div>
                         </div>
                         <div class="form-row">
                             <div class="form-col">
@@ -320,16 +330,6 @@
                                     onchange={handlePaymentFieldChange}
                                     required
                                 ></lightning-combobox>
-                            </div>
-                            <div class="form-col">
-                                <lightning-input
-                                    type="text"
-                                    label="UPI Reference Number"
-                                    value={paymentData.upiReferenceNumber}
-                                    data-field="upiReferenceNumber"
-                                    onchange={handlePaymentFieldChange}
-                                    required
-                                ></lightning-input>
                             </div>
                         </div>
                     </template>
@@ -396,16 +396,6 @@
                                     required
                                 ></lightning-input>
                             </div>
-                            <div class="form-col">
-                                <lightning-input
-                                    type="text"
-                                    label="Transaction Reference"
-                                    value={paymentData.transactionReference}
-                                    data-field="transactionReference"
-                                    onchange={handlePaymentFieldChange}
-                                    required
-                                ></lightning-input>
-                            </div>
                         </div>
                     </template>
 
@@ -443,16 +433,6 @@
                                     data-field="cardNumber"
                                     onchange={handlePaymentFieldChange}
                                     maxlength="4"
-                                    required
-                                ></lightning-input>
-                            </div>
-                            <div class="form-col">
-                                <lightning-input
-                                    type="text"
-                                    label="Transaction ID"
-                                    value={paymentData.transactionId}
-                                    data-field="transactionId"
-                                    onchange={handlePaymentFieldChange}
                                     required
                                 ></lightning-input>
                             </div>
@@ -503,30 +483,10 @@
                                 <span class="success-label">Date:</span>
                                 <span class="success-value">{formattedPaymentDate}</span>
                             </div>
-                            <template if:true={isUPIMode}>
-                                <div class="success-row">
-                                    <span class="success-label">Ref Number:</span>
-                                    <span class="success-value">{paymentData.upiReferenceNumber}</span>
-                                </div>
-                            </template>
-                            <template if:true={isCashMode}>
-                                <div class="success-row">
-                                    <span class="success-label">Receipt #:</span>
-                                    <span class="success-value">{paymentData.cashReceiptNumber}</span>
-                                </div>
-                            </template>
-                            <template if:true={isBankMode}>
-                                <div class="success-row">
-                                    <span class="success-label">Ref #:</span>
-                                    <span class="success-value">{paymentData.transactionReference}</span>
-                                </div>
-                            </template>
-                            <template if:true={isCardMode}>
-                                <div class="success-row">
-                                    <span class="success-label">Transaction ID:</span>
-                                    <span class="success-value">{paymentData.transactionId}</span>
-                                </div>
-                            </template>
+                            <div class="success-row">
+                                <span class="success-label">Transaction ID:</span>
+                                <span class="success-value transaction-id">{generatedTransactionId}</span>
+                            </div>
                         </div>
                     </div>
 

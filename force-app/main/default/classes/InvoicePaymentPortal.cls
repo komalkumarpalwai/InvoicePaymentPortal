@@ -67,6 +67,7 @@ public without sharing class InvoicePaymentPortal {
             Decimal paymentAmount = getDecimalValue(paymentData.get('paymentAmount'));
             String paymentDate = (String) paymentData.get('paymentDate');
             String currencyCode = (String) paymentData.get('currencyIsoCode');
+            String transactionId = (String) paymentData.get('transactionId');
 
             System.debug('Extracted fields - InvoiceId: ' + invoiceId + ', CustomerId: ' + customerId + ', Mode: ' + paymentMode);
 
@@ -104,6 +105,7 @@ public without sharing class InvoicePaymentPortal {
             
             payment.AMERP_Payment_Mode__c = paymentMode;
             payment.AMERP_Payment_Status__c = 'Received';
+            payment.AMERP_Transaction_Id__c = transactionId;
             if (String.isNotBlank(currencyCode)) {
                 payment.CurrencyIsoCode = currencyCode;
             }
@@ -114,7 +116,7 @@ public without sharing class InvoicePaymentPortal {
             if (paymentMode == 'UPI') {
                 payment.AMERP_UPI_Id__c = (String) paymentData.get('upiId');
                 payment.AMERP_UPI_App_Name__c = (String) paymentData.get('upiAppName');
-                payment.AMERP_UPI_Reference_Numbe__c = (String) paymentData.get('upiReferenceNumber');
+                payment.AMERP_Name_On_Upi__c = (String) paymentData.get('nameOnUpi');
                 System.debug('UPI fields set: UPI_Id=' + payment.AMERP_UPI_Id__c);
             } else if (paymentMode == 'Cash') {
                 payment.AMERP_Cash_Receipt_Number__c = (String) paymentData.get('cashReceiptNumber');
@@ -124,7 +126,6 @@ public without sharing class InvoicePaymentPortal {
                 payment.AMERP_Bank_Name__c = (String) paymentData.get('bankName');
                 payment.AMERP_Bank_Account_Number__c = (String) paymentData.get('bankAccountNumber');
                 payment.AMERP_IFSC_Code__c = (String) paymentData.get('ifscCode');
-                payment.AMERP_Transaction_Reference__c = (String) paymentData.get('transactionReference');
                 System.debug('Bank fields set: Bank=' + payment.AMERP_Bank_Name__c);
             } else if (paymentMode == 'Card') {
                 payment.AMERP_Card_Type__c = (String) paymentData.get('cardType');
@@ -134,7 +135,6 @@ public without sharing class InvoicePaymentPortal {
                 if (String.isNotBlank(cardNumber) && cardNumber.length() >= 4) {
                     payment.AMERP_Card_Number__c = cardNumber.substring(cardNumber.length() - 4);
                 }
-                payment.AMERP_Transaction_Id__c = (String) paymentData.get('transactionId');
                 System.debug('Card fields set: CardType=' + payment.AMERP_Card_Type__c);
             }
 

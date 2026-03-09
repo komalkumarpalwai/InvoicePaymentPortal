@@ -21,19 +21,19 @@ export default class InvoicePaymentPortal extends LightningElement {
     // Payment data object
     @track paymentData = {
         upiId: '',
+        nameOnUpi: '',
         upiAppName: '',
-        upiReferenceNumber: '',
         cashReceiptNumber: '',
         cashReceivedBy: '',
         bankName: '',
         bankAccountNumber: '',
         ifscCode: '',
-        transactionReference: '',
         cardType: '',
         cardHolderName: '',
-        cardNumber: '',
-        transactionId: ''
+        cardNumber: ''
     };
+
+    @track generatedTransactionId = '';
 
     handleInvoiceNumberChange(event) {
         this.invoiceNumber = event.target.value;
@@ -185,18 +185,16 @@ export default class InvoicePaymentPortal extends LightningElement {
         // Reset form fields when mode changes
         this.paymentData = {
             upiId: '',
+            nameOnUpi: '',
             upiAppName: '',
-            upiReferenceNumber: '',
             cashReceiptNumber: '',
             cashReceivedBy: '',
             bankName: '',
             bankAccountNumber: '',
             ifscCode: '',
-            transactionReference: '',
             cardType: '',
             cardHolderName: '',
-            cardNumber: '',
-            transactionId: ''
+            cardNumber: ''
         };
         this.paymentErrorMessage = '';
     }
@@ -240,12 +238,12 @@ export default class InvoicePaymentPortal extends LightningElement {
                 this.paymentErrorMessage = 'UPI ID is required.';
                 return false;
             }
-            if (!this.paymentData.upiAppName) {
-                this.paymentErrorMessage = 'UPI App Name is required.';
+            if (!this.paymentData.nameOnUpi || !this.paymentData.nameOnUpi.trim()) {
+                this.paymentErrorMessage = 'Name On UPI is required.';
                 return false;
             }
-            if (!this.paymentData.upiReferenceNumber || !this.paymentData.upiReferenceNumber.trim()) {
-                this.paymentErrorMessage = 'UPI Reference Number is required.';
+            if (!this.paymentData.upiAppName) {
+                this.paymentErrorMessage = 'UPI App Name is required.';
                 return false;
             }
         } else if (this.selectedPaymentMode === 'Cash') {
@@ -270,10 +268,6 @@ export default class InvoicePaymentPortal extends LightningElement {
                 this.paymentErrorMessage = 'IFSC Code is required.';
                 return false;
             }
-            if (!this.paymentData.transactionReference || !this.paymentData.transactionReference.trim()) {
-                this.paymentErrorMessage = 'Transaction Reference is required.';
-                return false;
-            }
         } else if (this.selectedPaymentMode === 'Card') {
             if (!this.paymentData.cardType) {
                 this.paymentErrorMessage = 'Card Type is required.';
@@ -285,10 +279,6 @@ export default class InvoicePaymentPortal extends LightningElement {
             }
             if (!this.paymentData.cardNumber || !this.paymentData.cardNumber.trim()) {
                 this.paymentErrorMessage = 'Card Number is required.';
-                return false;
-            }
-            if (!this.paymentData.transactionId || !this.paymentData.transactionId.trim()) {
-                this.paymentErrorMessage = 'Transaction ID is required.';
                 return false;
             }
         }
@@ -303,6 +293,9 @@ export default class InvoicePaymentPortal extends LightningElement {
             return;
         }
 
+        // Generate random transaction ID
+        this.generatedTransactionId = this.generateTransactionId();
+
         this.isPaymentLoading = true;
 
         // Build payment data map
@@ -313,6 +306,7 @@ export default class InvoicePaymentPortal extends LightningElement {
             paymentAmount: this.paymentAmount,
             paymentDate: this.paymentDate,
             currencyIsoCode: this.invoiceRecord.CurrencyIsoCode,
+            transactionId: this.generatedTransactionId,
             ...this.paymentData
         };
 
@@ -342,6 +336,20 @@ export default class InvoicePaymentPortal extends LightningElement {
             });
     }
 
+    generateTransactionId() {
+        // Generate format: TXN-YYYYMMDDHHMMSS-RandomNumber
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const date = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const randomNum = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+        
+        return `TXN-${year}${month}${date}${hours}${minutes}${seconds}-${randomNum}`;
+    }
+
     refreshInvoiceData() {
         if (!this.invoiceNumber || !this.invoiceNumber.trim()) {
             return;
@@ -365,19 +373,18 @@ export default class InvoicePaymentPortal extends LightningElement {
         this.paymentErrorMessage = '';
         this.paymentData = {
             upiId: '',
+            nameOnUpi: '',
             upiAppName: '',
-            upiReferenceNumber: '',
             cashReceiptNumber: '',
             cashReceivedBy: '',
             bankName: '',
             bankAccountNumber: '',
             ifscCode: '',
-            transactionReference: '',
             cardType: '',
             cardHolderName: '',
-            cardNumber: '',
-            transactionId: ''
+            cardNumber: ''
         };
+        this.generatedTransactionId = '';
     }
 
     handleSearchAnother() {
@@ -389,20 +396,19 @@ export default class InvoicePaymentPortal extends LightningElement {
         this.selectedPaymentMode = 'UPI';
         this.paymentData = {
             upiId: '',
+            nameOnUpi: '',
             upiAppName: '',
-            upiReferenceNumber: '',
             cashReceiptNumber: '',
             cashReceivedBy: '',
             bankName: '',
             bankAccountNumber: '',
             ifscCode: '',
-            transactionReference: '',
             cardType: '',
             cardHolderName: '',
-            cardNumber: '',
-            transactionId: ''
+            cardNumber: ''
         };
         this.newPaymentId = null;
+        this.generatedTransactionId = '';
     }
 
     get upiAppOptions() {
