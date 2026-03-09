@@ -1,12 +1,16 @@
 import { LightningElement, track } from 'lwc';
 import getInvoiceByNumber from '@salesforce/apex/InvoicePaymentPortal.getInvoiceByNumber';
 import makePayment from '@salesforce/apex/InvoicePaymentPortal.makePayment';
+import getPaymentHistory from '@salesforce/apex/InvoicePaymentPortal.getPaymentHistory';
 
 export default class InvoicePaymentPortal extends LightningElement {
     @track invoiceNumber = '';
     @track invoiceRecord;
     @track isLoading = false;
     @track errorMessage = '';
+    @track autoLoadedFromUrl = false;
+    @track paymentHistory = [];
+    @track paymentHistoryLoading = false;
 
     // Payment form properties
     @track showPaymentSection = false;
@@ -35,6 +39,21 @@ export default class InvoicePaymentPortal extends LightningElement {
 
     @track generatedTransactionId = '';
 
+    connectedCallback() {
+        // Extract invoiceNumber from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const invoiceNumberParam = urlParams.get('invoiceNumber');
+        
+        if (invoiceNumberParam) {
+            this.invoiceNumber = invoiceNumberParam;
+            this.autoLoadedFromUrl = true;
+            // Auto-trigger search after component is loaded
+            setTimeout(() => {
+                this.handleSearch();
+            }, 100);
+        }
+    }
+
     handleInvoiceNumberChange(event) {
         this.invoiceNumber = event.target.value;
     }
@@ -58,6 +77,11 @@ export default class InvoicePaymentPortal extends LightningElement {
                 this.invoiceRecord = result;
                 this.errorMessage = '';
                 this.isLoading = false;
+                
+                // Fetch payment history after invoice is loaded
+                if (result && result.Id) {
+                    this.fetchPaymentHistory(result.Id);
+                }
             })
             .catch((error) => {
                 console.error('Error full object:', JSON.stringify(error));
@@ -361,11 +385,40 @@ export default class InvoicePaymentPortal extends LightningElement {
             .then((result) => {
                 console.log('Invoice refreshed:', JSON.stringify(result));
                 this.invoiceRecord = result;
+                
+                // Also refresh payment history
+                if (result && result.Id) {
+                    this.fetchPaymentHistory(result.Id);
+                }
             })
             .catch((error) => {
                 console.error('Error refreshing invoice:', JSON.stringify(error));
                 // Don't show error during refresh, just log it
             });
+    }
+
+    fetchPaymentHistory(invoiceId) {
+        this.paymentHistoryLoading = true;
+        
+        getPaymentHistory({ invoiceId: invoiceId })
+            .then((result) => {
+                console.log('Payment history fetched:', JSON.stringify(result));
+                this.paymentHistory = result || [];
+                this.paymentHistoryLoading = false;
+            })
+            .catch((error) => {
+                console.error('Error fetching payment history:', JSON.stringify(error));
+                this.paymentHistory = [];
+                this.paymentHistoryLoading = false;
+            });
+    }
+
+    get formattedPaymentHistory() {
+        return this.paymentHistory.map(payment => ({
+            ...payment,
+            formattedDate: this.formatDate(payment.AMERP_Payment_Date__c),
+            formattedAmount: this.formatCurrency(payment.AMERP_Payment_Amount__c)
+        }));
     }
 
     handleCancelPayment() {
@@ -394,6 +447,8 @@ export default class InvoicePaymentPortal extends LightningElement {
         this.showPaymentSection = false;
         this.showSuccessScreen = false;
         this.selectedPaymentMode = 'UPI';
+        this.autoLoadedFromUrl = false;
+        this.paymentHistory = [];
         this.paymentData = {
             upiId: '',
             nameOnUpi: '',
@@ -409,6 +464,24 @@ export default class InvoicePaymentPortal extends LightningElement {
         };
         this.newPaymentId = null;
         this.generatedTransactionId = '';
+    }
+
+    downloadPaymentReceipt(event) {
+        const paymentId = event.currentTarget.dataset.paymentId;
+        
+        if (!paymentId) {
+            console.error('Payment ID not found');
+            return;
+        }
+
+        // Get the current org's instance URL
+        const urlParts = window.location.href.split('/s/')[0];
+        
+        // Build the Visualforce page URL with payment ID parameter
+        const vfPageUrl = `${urlParts}/apex/InvoicePaymentPage?paymentId=${paymentId}`;
+        
+        // Open in a new tab/window
+        window.open(vfPageUrl, '_blank');
     }
 
     get upiAppOptions() {

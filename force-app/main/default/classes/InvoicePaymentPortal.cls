@@ -1,5 +1,83 @@
 public without sharing class InvoicePaymentPortal {
-    @AuraEnabled  // removed cacheable=true
+    
+    // Properties for Visualforce page
+    public AMERP_Invoice_Payment__c latestPayment { get; set; }
+    public AMERP_Custom_Invoice__c invoice { get; set; }
+    public String orderNumber { get; set; }
+    public Decimal amountPaidBeforeThis { get; set; }
+    public Decimal amountPaid { get; set; }
+    public Decimal balanceDue { get; set; }
+    public String customerName { get; set; }
+    public String customerAddress { get; set; }
+    public String customerCity { get; set; }
+    public String customerPhone { get; set; }
+    public String customerEmail { get; set; }
+    public String customerGST { get; set; }
+
+    public InvoicePaymentPortal() {
+        // Constructor to initialize payment receipt data from URL parameter
+        String paymentId = ApexPages.currentPage().getParameters().get('paymentId');
+        if (String.isNotBlank(paymentId)) {
+            loadPaymentReceipt(paymentId);
+        }
+    }
+
+    private void loadPaymentReceipt(String paymentId) {
+        try {
+            // Fetch payment with invoice details
+            List<AMERP_Invoice_Payment__c> payments = [
+                SELECT
+                    Id,
+                    Name,
+                    AMERP_Payment_Date__c,
+                    AMERP_Payment_Mode__c,
+                    AMERP_Transaction_Id__c,
+                    AMERP_Transaction_Reference__c,
+                    AMERP_Payment_Amount__c,
+                    AMERP_Payment_Status__c,
+                    AMERP_Invoice__c,
+                    AMERP_Invoice__r.Id,
+                    AMERP_Invoice__r.Name,
+                    AMERP_Invoice__r.AMERP_Invoice_Date__c,
+                    AMERP_Invoice__r.AMERP_Due_Date__c,
+                    AMERP_Invoice__r.AMERP_Invoice_Amount__c,
+                    AMERP_Invoice__r.AMERP_Total_Paid_Amount__c,
+                    AMERP_Invoice__r.AMERP_Payment_Status__c,
+                    AMERP_Invoice__r.AMERP_Order__c,
+                    AMERP_Invoice__r.AMERP_Order__r.Name,
+                    AMERP_Invoice__r.AMERP_Customer__c,
+                    AMERP_Invoice__r.AMERP_Customer__r.Name,
+                    CurrencyIsoCode
+                FROM AMERP_Invoice_Payment__c
+                WHERE Id = :paymentId
+                LIMIT 1
+            ];
+
+            if (!payments.isEmpty()) {
+                latestPayment = payments[0];
+                invoice = latestPayment.AMERP_Invoice__r;
+                
+                // Set customer details
+                if (invoice.AMERP_Customer__r != null) {
+                    customerName = invoice.AMERP_Customer__r.Name;
+                }
+                
+                // Set order number
+                if (invoice.AMERP_Order__r != null) {
+                    orderNumber = invoice.AMERP_Order__r.Name;
+                }
+
+                // Calculate amounts
+                amountPaid = latestPayment.AMERP_Payment_Amount__c;
+                amountPaidBeforeThis = (invoice.AMERP_Total_Paid_Amount__c != null ? invoice.AMERP_Total_Paid_Amount__c : 0) - amountPaid;
+                balanceDue = (invoice.AMERP_Invoice_Amount__c != null ? invoice.AMERP_Invoice_Amount__c : 0) - (invoice.AMERP_Total_Paid_Amount__c != null ? invoice.AMERP_Total_Paid_Amount__c : 0);
+            }
+        } catch (Exception e) {
+            System.debug('Error loading payment receipt: ' + e.getMessage());
+        }
+    }
+    
+    @AuraEnabled
     public static AMERP_Custom_Invoice__c getInvoiceByNumber(String invoiceNumber) {
         if (String.isBlank(invoiceNumber)) {
             AuraHandledException e = new AuraHandledException('Please enter an invoice number.');
@@ -154,6 +232,75 @@ public without sharing class InvoicePaymentPortal {
             e.setMessage('Payment processing failed: ' + ex.getMessage());
             throw e;
         }
+    }
+
+    @AuraEnabled
+    public static List<AMERP_Invoice_Payment__c> getPaymentHistory(String invoiceId) {
+        if (String.isBlank(invoiceId)) {
+            return new List<AMERP_Invoice_Payment__c>();
+        }
+
+        System.debug('Fetching payment history for invoice: ' + invoiceId);
+
+        List<AMERP_Invoice_Payment__c> payments = [
+            SELECT
+                Id,
+                Name,
+                AMERP_Payment_Date__c,
+                AMERP_Payment_Mode__c,
+                AMERP_Transaction_Id__c,
+                AMERP_Payment_Amount__c,
+                AMERP_Payment_Status__c,
+                CurrencyIsoCode
+            FROM AMERP_Invoice_Payment__c
+            WHERE AMERP_Invoice__c = :invoiceId
+            ORDER BY AMERP_Payment_Date__c DESC
+        ];
+
+        System.debug('Payment records found: ' + payments.size());
+        return payments;
+    }
+
+    @AuraEnabled
+    public static AMERP_Invoice_Payment__c getPaymentRecord(String paymentId) {
+        if (String.isBlank(paymentId)) {
+            throw new AuraHandledException('Payment ID is missing.');
+        }
+
+        System.debug('Fetching payment record: ' + paymentId);
+
+        List<AMERP_Invoice_Payment__c> payments = [
+            SELECT
+                Id,
+                Name,
+                AMERP_Payment_Date__c,
+                AMERP_Payment_Mode__c,
+                AMERP_Transaction_Id__c,
+                AMERP_Payment_Amount__c,
+                AMERP_Payment_Status__c,
+                AMERP_Invoice__c,
+                AMERP_Invoice__r.Id,
+                AMERP_Invoice__r.Name,
+                AMERP_Invoice__r.AMERP_Invoice_Date__c,
+                AMERP_Invoice__r.AMERP_Due_Date__c,
+                AMERP_Invoice__r.AMERP_Invoice_Amount__c,
+                AMERP_Invoice__r.AMERP_Total_Paid_Amount__c,
+                AMERP_Invoice__r.AMERP_Payment_Status__c,
+                AMERP_Invoice__r.AMERP_Customer__c,
+                AMERP_Invoice__r.AMERP_Customer__r.Name,
+                AMERP_Invoice__r.AMERP_Order__c,
+                AMERP_Invoice__r.AMERP_Order__r.Name,
+                CurrencyIsoCode
+            FROM AMERP_Invoice_Payment__c
+            WHERE Id = :paymentId
+            LIMIT 1
+        ];
+
+        if (payments.isEmpty()) {
+            throw new AuraHandledException('Payment record not found.');
+        }
+
+        return payments[0];
     }
 
     // Helper method to safely convert Object to Decimal

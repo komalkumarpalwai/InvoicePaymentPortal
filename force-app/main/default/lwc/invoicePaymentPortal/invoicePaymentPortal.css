@@ -395,3 +395,101 @@
         margin-bottom: 1.5rem;
     }
 }
+
+/* ============================================ */
+/* PAYMENT HISTORY TABLE STYLES */
+/* ============================================ */
+
+.payment-history-table {
+    overflow-x: auto;
+}
+
+.payment-history-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.table-header-row {
+    background-color: #f5f5f5;
+    border-bottom: 2px solid #0176d3;
+}
+
+.table-header-row th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 700;
+    color: #1a1a1a;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-right: 1px solid #e0e0e0;
+}
+
+.table-header-row th:last-child {
+    border-right: none;
+}
+
+.table-body-row {
+    border-bottom: 1px solid #e8e8e8;
+    transition: background-color 0.2s ease;
+}
+
+.table-body-row:hover {
+    background-color: #f9f9f9;
+}
+
+.table-body-row td {
+    padding: 14px 16px;
+    color: #333333;
+    border-right: 1px solid #e8e8e8;
+}
+
+.table-body-row td:last-child {
+    border-right: none;
+}
+
+.transaction-id {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.85rem;
+    color: #0176d3;
+    font-weight: 500;
+    word-break: break-all;
+}
+
+.amount-cell {
+    font-weight: 600;
+    color: #2e7d32;
+}
+
+.receipt-button {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #534f4f38;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.receipt-button:hover {
+    background-color: #b1d6e9;
+    color: #2e7d32;
+    border-color: #2e7d32;
+    transition: background-color 0.2s ease;
+    -webkit-transition: background-color 0.2s ease;
+    -moz-transition: background-color 0.2s ease;
+    -ms-transition: background-color 0.2s ease;
+    -o-transition: background-color 0.2s ease;
+}
+
+.no-data-message {
+    text-align: center;
+    color: #888888;
+    padding: 1.5rem;
+    font-size: 0.9rem;
+    font-style: italic;
+    margin: 0;
+}

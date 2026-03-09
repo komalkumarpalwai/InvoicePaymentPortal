@@ -1,34 +1,36 @@
 <template>
     <lightning-card title="Invoice Payment Portal" icon-name="standard:invoice">
 
-        <!-- Search Section -->
-        <div class="slds-p-around_medium search-section">
-            <div class="slds-grid slds-wrap slds-gutters slds-grid_align-center">
-                <div class="slds-col slds-size_1-of-1 slds-medium-size_8-of-12">
-                    <lightning-input
-                        type="text"
-                        label="Enter Invoice Number"
-                        placeholder="e.g., INV-0001"
-                        value={invoiceNumber}
-                        onchange={handleInvoiceNumberChange}
-                        onkeypress={handleKeyPress}
-                    ></lightning-input>
-                </div>
-                <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-12 slds-p-top_large slds-grid slds-gutters">
-                    <lightning-button
-                        label="Search"
-                        onclick={handleSearch}
-                        variant="brand"
-                        class="slds-m-right_small"
-                    ></lightning-button>
-                    <lightning-button
-                        label="Clear"
-                        onclick={handleClear}
-                        variant="neutral"
-                    ></lightning-button>
+        <!-- Search Section (hidden if auto-loaded from URL) -->
+        <template if:false={autoLoadedFromUrl}>
+            <div class="slds-p-around_medium search-section">
+                <div class="slds-grid slds-wrap slds-gutters slds-grid_align-center">
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_8-of-12">
+                        <lightning-input
+                            type="text"
+                            label="Enter Invoice Number"
+                            placeholder="e.g., INV-0001"
+                            value={invoiceNumber}
+                            onchange={handleInvoiceNumberChange}
+                            onkeypress={handleKeyPress}
+                        ></lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-12 slds-p-top_large slds-grid slds-gutters">
+                        <lightning-button
+                            label="Search"
+                            onclick={handleSearch}
+                            variant="brand"
+                            class="slds-m-right_small"
+                        ></lightning-button>
+                        <lightning-button
+                            label="Clear"
+                            onclick={handleClear}
+                            variant="neutral"
+                        ></lightning-button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </template>
 
         <!-- Loading Spinner -->
         <template if:true={isLoading}>
@@ -88,7 +90,7 @@
                                     <template if:false={invoiceRecord.Contact__r}>—</template>
                                 </span>
                             </div>
-                            <div class="info-field">
+                            <!-- <div class="info-field">
                                 <span class="field-label">Vendor</span>
                                 <span class="field-value highlight-orange">
                                     <template if:true={invoiceRecord.AMERP_Vendor__r}>
@@ -96,7 +98,7 @@
                                     </template>
                                     <template if:false={invoiceRecord.AMERP_Vendor__r}>—</template>
                                 </span>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
                 </div>
@@ -113,10 +115,10 @@
                                 <span class="field-label">Invoice Amount</span>
                                 <span class="field-value bold">{formattedInvoiceAmount}</span>
                             </div>
-                            <div class="info-field">
+                            <!-- <div class="info-field">
                                 <span class="field-label">Total Amount</span>
                                 <span class="field-value bold">{formattedTotalAmount}</span>
-                            </div>
+                            </div> -->
                             <div class="info-field">
                                 <span class="field-label">Total Paid Amount</span>
                                 <span class="field-value highlight-green">{formattedPaidAmount}</span>
@@ -193,6 +195,60 @@
                     </div>
                 </div> -->
 
+                <!-- Payment History Section -->
+                <template if:true={paymentHistory}>
+                    <div class="info-section slds-m-bottom_medium">
+                        <div class="section-header">
+                            <span class="section-icon">📋</span>
+                            <span class="section-title">Payment History</span>
+                        </div>
+                        <div class="info-card">
+                            <template if:true={paymentHistory.length}>
+                                <div class="payment-history-table">
+                                    <table>
+                                        <thead>
+                                            <tr class="table-header-row">
+                                                <th>Date</th>
+                                                <th>Payment Mode</th>
+                                                <th>Transaction ID</th>
+                                                <th>Amount</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template for:each={formattedPaymentHistory} for:item="payment">
+                                                <tr key={payment.Id} class="table-body-row">
+                                                    <td>{payment.formattedDate}</td>
+                                                    <td>{payment.AMERP_Payment_Mode__c}</td>
+                                                    <td class="transaction-id">{payment.AMERP_Transaction_Id__c}</td>
+                                                    <td class="amount-cell">{payment.formattedAmount}</td>
+                                                    <td>
+                                                        <span class="status-badge">{payment.AMERP_Payment_Status__c}</span>
+                                                    </td>
+                                                    <td>
+                                                        <lightning-button
+                                                            label="Download Receipt"
+                                                            variant="base"
+                                                            size="small"
+                                                            onclick={downloadPaymentReceipt}
+                                                            data-payment-id={payment.Id}
+                                                            class="receipt-button"
+                                                        ></lightning-button>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </template>
+                            <template if:false={paymentHistory.length}>
+                                <p class="no-data-message">No payments recorded yet.</p>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
                 <!-- Remarks Section -->
                 <template if:true={invoiceRecord.AMERP_Remarks__c}>
                     <div class="info-section">
@@ -206,17 +262,25 @@
                     </div>
                 </template>
 
-                <!-- Make Payment Button -->
-                <template if:true={hasOutstanding}>
-                    <div class="slds-p-around_medium slds-text-align_center slds-m-top_large">
+                <!-- Make Payment Button and Search Another Button -->
+                <div class="slds-p-around_medium slds-text-align_center slds-m-top_large">
+                    <template if:true={autoLoadedFromUrl}>
+                        <lightning-button
+                            label="Search Another Invoice"
+                            variant="neutral"
+                            onclick={handleSearchAnother}
+                            class="slds-m-right_small"
+                        ></lightning-button>
+                    </template>
+                    <template if:true={hasOutstanding}>
                         <lightning-button
                             label="Make Payment"
                             variant="success"
                             onclick={handleMakePayment}
                             class="pay-button"
                         ></lightning-button>
-                    </div>
-                </template>
+                    </template>
+                </div>
 
             </div>
         </template>
