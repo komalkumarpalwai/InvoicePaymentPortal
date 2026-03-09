@@ -206,6 +206,356 @@
                     </div>
                 </template>
 
+                <!-- Make Payment Button -->
+                <template if:true={hasOutstanding}>
+                    <div class="slds-p-around_medium slds-text-align_center slds-m-top_large">
+                        <lightning-button
+                            label="Make Payment"
+                            variant="success"
+                            onclick={handleMakePayment}
+                            class="pay-button"
+                        ></lightning-button>
+                    </div>
+                </template>
+
+            </div>
+        </template>
+
+        <!-- Payment Form Section -->
+        <template if:true={showPaymentSection}>
+            <div class="payment-section slds-p-around_medium">
+                <h2 class="payment-header">💳 Make Payment</h2>
+                
+                <!-- Payment Error Message -->
+                <template if:true={paymentErrorMessage}>
+                    <div class="slds-p-around_small slds-m-bottom_medium">
+                        <div class="error-alert" role="alert">
+                            <p>{paymentErrorMessage}</p>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Payment Mode Tabs -->
+                <div class="payment-mode-tabs slds-m-bottom_medium">
+                    <button
+                        class={upiTabClass}
+                        data-mode="UPI"
+                        onclick={handlePaymentModeSelect}
+                    >
+                        UPI
+                    </button>
+                    <button
+                        class={cashTabClass}
+                        data-mode="Cash"
+                        onclick={handlePaymentModeSelect}
+                    >
+                        Cash
+                    </button>
+                    <button
+                        class={bankTabClass}
+                        data-mode="Bank Transfer"
+                        onclick={handlePaymentModeSelect}
+                    >
+                        Bank Transfer
+                    </button>
+                    <button
+                        class={cardTabClass}
+                        data-mode="Card"
+                        onclick={handlePaymentModeSelect}
+                    >
+                        Card
+                    </button>
+                </div>
+
+                <!-- Payment Form Card -->
+                <div class="payment-form-card">
+                    <!-- Common Fields -->
+                    <div class="form-row">
+                        <div class="form-col">
+                            <lightning-input
+                                type="number"
+                                label="Payment Amount"
+                                value={paymentAmount}
+                                data-field="paymentAmount"
+                                onchange={handlePaymentFieldChange}
+                                step="0.01"
+                                min="0"
+                                required
+                            ></lightning-input>
+                        </div>
+                        <div class="form-col">
+                            <lightning-input
+                                type="date"
+                                label="Payment Date"
+                                value={paymentDate}
+                                data-field="paymentDate"
+                                onchange={handlePaymentFieldChange}
+                                required
+                            ></lightning-input>
+                        </div>
+                    </div>
+
+                    <!-- UPI Fields -->
+                    <template if:true={isUPIMode}>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <lightning-input
+                                    type="text"
+                                    label="UPI ID"
+                                    placeholder="user@bank"
+                                    value={paymentData.upiId}
+                                    data-field="upiId"
+                                    onchange={handlePaymentFieldChange}
+                                    required
+                                ></lightning-input>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <lightning-combobox
+                                    label="UPI App Name"
+                                    value={paymentData.upiAppName}
+                                    options={upiAppOptions}
+                                    data-field="upiAppName"
+                                    onchange={handlePaymentFieldChange}
+                                    required
+                                ></lightning-combobox>
+                            </div>
+                            <div class="form-col">
+                                <lightning-input
+                                    type="text"
+                                    label="UPI Reference Number"
+                                    value={paymentData.upiReferenceNumber}
+                                    data-field="upiReferenceNumber"
+                                    onchange={handlePaymentFieldChange}
+                                    required
+                                ></lightning-input>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Cash Fields -->
+                    <template if:true={isCashMode}>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <lightning-input
+                                    type="text"
+                                    label="Cash Receipt Number"
+                                    value={paymentData.cashReceiptNumber}
+                                    data-field="cashReceiptNumber"
+                                    onchange={handlePaymentFieldChange}
+                                    required
+                                ></lightning-input>
+                            </div>
+                            <div class="form-col">
+                                <lightning-input
+                                    type="text"
+                                    label="Cash Received By"
+                                    value={paymentData.cashReceivedBy}
+                                    data-field="cashReceivedBy"
+                                    onchange={handlePaymentFieldChange}
+                                    required
+                                ></lightning-input>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Bank Transfer Fields -->
+                    <template if:true={isBankMode}>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <lightning-input
+                                    type="text"
+                                    label="Bank Name"
+                                    value={paymentData.bankName}
+                                    data-field="bankName"
+                                    onchange={handlePaymentFieldChange}
+                                    required
+                                ></lightning-input>
+                            </div>
+                            <div class="form-col">
+                                <lightning-input
+                                    type="text"
+                                    label="Bank Account Number"
+                                    value={paymentData.bankAccountNumber}
+                                    data-field="bankAccountNumber"
+                                    onchange={handlePaymentFieldChange}
+                                    required
+                                ></lightning-input>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <lightning-input
+                                    type="text"
+                                    label="IFSC Code"
+                                    placeholder="e.g., SBIN0001234"
+                                    value={paymentData.ifscCode}
+                                    data-field="ifscCode"
+                                    onchange={handlePaymentFieldChange}
+                                    required
+                                ></lightning-input>
+                            </div>
+                            <div class="form-col">
+                                <lightning-input
+                                    type="text"
+                                    label="Transaction Reference"
+                                    value={paymentData.transactionReference}
+                                    data-field="transactionReference"
+                                    onchange={handlePaymentFieldChange}
+                                    required
+                                ></lightning-input>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Card Fields -->
+                    <template if:true={isCardMode}>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <lightning-combobox
+                                    label="Card Type"
+                                    value={paymentData.cardType}
+                                    options={cardTypeOptions}
+                                    data-field="cardType"
+                                    onchange={handlePaymentFieldChange}
+                                    required
+                                ></lightning-combobox>
+                            </div>
+                            <div class="form-col">
+                                <lightning-input
+                                    type="text"
+                                    label="Card Holder Name"
+                                    value={paymentData.cardHolderName}
+                                    data-field="cardHolderName"
+                                    onchange={handlePaymentFieldChange}
+                                    required
+                                ></lightning-input>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <lightning-input
+                                    type="password"
+                                    label="Card Number (Last 4 digits)"
+                                    placeholder="e.g., 1234"
+                                    value={paymentData.cardNumber}
+                                    data-field="cardNumber"
+                                    onchange={handlePaymentFieldChange}
+                                    maxlength="4"
+                                    required
+                                ></lightning-input>
+                            </div>
+                            <div class="form-col">
+                                <lightning-input
+                                    type="text"
+                                    label="Transaction ID"
+                                    value={paymentData.transactionId}
+                                    data-field="transactionId"
+                                    onchange={handlePaymentFieldChange}
+                                    required
+                                ></lightning-input>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Form Buttons -->
+                    <div class="form-buttons slds-m-top_large">
+                        <template if:true={isPaymentLoading}>
+                            <lightning-spinner alternative-text="Processing payment..." size="small"></lightning-spinner>
+                        </template>
+                        <template if:false={isPaymentLoading}>
+                            <lightning-button
+                                label="Pay Now"
+                                variant="success"
+                                onclick={handlePayNow}
+                                class="slds-m-right_small"
+                            ></lightning-button>
+                            <lightning-button
+                                label="Cancel"
+                                variant="neutral"
+                                onclick={handleCancelPayment}
+                            ></lightning-button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Success Screen -->
+        <template if:true={showSuccessScreen}>
+            <div class="success-screen slds-p-around_large">
+                <div class="success-container">
+                    <div class="success-icon">✅</div>
+                    <h2 class="success-title">Payment Successful!</h2>
+                    
+                    <div class="success-card">
+                        <div class="success-summary">
+                            <div class="success-row">
+                                <span class="success-label">Amount:</span>
+                                <span class="success-value">{formattedPaymentAmount}</span>
+                            </div>
+                            <div class="success-row">
+                                <span class="success-label">Payment Mode:</span>
+                                <span class="success-value">{selectedPaymentMode}</span>
+                            </div>
+                            <div class="success-row">
+                                <span class="success-label">Date:</span>
+                                <span class="success-value">{formattedPaymentDate}</span>
+                            </div>
+                            <template if:true={isUPIMode}>
+                                <div class="success-row">
+                                    <span class="success-label">Ref Number:</span>
+                                    <span class="success-value">{paymentData.upiReferenceNumber}</span>
+                                </div>
+                            </template>
+                            <template if:true={isCashMode}>
+                                <div class="success-row">
+                                    <span class="success-label">Receipt #:</span>
+                                    <span class="success-value">{paymentData.cashReceiptNumber}</span>
+                                </div>
+                            </template>
+                            <template if:true={isBankMode}>
+                                <div class="success-row">
+                                    <span class="success-label">Ref #:</span>
+                                    <span class="success-value">{paymentData.transactionReference}</span>
+                                </div>
+                            </template>
+                            <template if:true={isCardMode}>
+                                <div class="success-row">
+                                    <span class="success-label">Transaction ID:</span>
+                                    <span class="success-value">{paymentData.transactionId}</span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Updated Invoice Information -->
+                    <template if:true={invoiceRecord}>
+                        <div class="success-updated-info">
+                            <h3 class="success-subheader">Updated Invoice Information</h3>
+                            <div class="updated-info-row">
+                                <span class="success-label">Total Paid Amount:</span>
+                                <span class="success-value">{formattedPaidAmount}</span>
+                            </div>
+                            <div class="updated-info-row">
+                                <span class="success-label">Outstanding Amount:</span>
+                                <span class="success-value">{formattedOutstandingAmount}</span>
+                            </div>
+                            <div class="updated-info-row">
+                                <span class="success-label">Balance Amount:</span>
+                                <span class="success-value">{formattedBalanceAmount}</span>
+                            </div>
+                        </div>
+                    </template>
+
+                    <lightning-button
+                        label="Search Another Invoice"
+                        variant="brand"
+                        onclick={handleSearchAnother}
+                        class="success-button"
+                    ></lightning-button>
+                </div>
             </div>
         </template>
 
