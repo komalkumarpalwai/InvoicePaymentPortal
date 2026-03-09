@@ -15,7 +15,6 @@ public without sharing class InvoicePaymentPortal {
     public String customerGST { get; set; }
 
     public InvoicePaymentPortal() {
-        // Constructor to initialize payment receipt data from URL parameter
         String paymentId = ApexPages.currentPage().getParameters().get('paymentId');
         if (String.isNotBlank(paymentId)) {
             loadPaymentReceipt(paymentId);
@@ -24,11 +23,12 @@ public without sharing class InvoicePaymentPortal {
 
     private void loadPaymentReceipt(String paymentId) {
         try {
-            // Fetch payment with invoice details
+            // Fetch the specific payment with invoice details
             List<AMERP_Invoice_Payment__c> payments = [
                 SELECT
                     Id,
                     Name,
+                    CreatedDate,
                     AMERP_Payment_Date__c,
                     AMERP_Payment_Mode__c,
                     AMERP_Transaction_Id__c,
@@ -56,27 +56,52 @@ public without sharing class InvoicePaymentPortal {
             if (!payments.isEmpty()) {
                 latestPayment = payments[0];
                 invoice = latestPayment.AMERP_Invoice__r;
-                
+
                 // Set customer details
                 if (invoice.AMERP_Customer__r != null) {
                     customerName = invoice.AMERP_Customer__r.Name;
                 }
-                
+
                 // Set order number
                 if (invoice.AMERP_Order__r != null) {
                     orderNumber = invoice.AMERP_Order__r.Name;
                 }
 
-                // Calculate amounts
-                amountPaid = latestPayment.AMERP_Payment_Amount__c;
-                amountPaidBeforeThis = (invoice.AMERP_Total_Paid_Amount__c != null ? invoice.AMERP_Total_Paid_Amount__c : 0) - amountPaid;
-                balanceDue = (invoice.AMERP_Invoice_Amount__c != null ? invoice.AMERP_Invoice_Amount__c : 0) - (invoice.AMERP_Total_Paid_Amount__c != null ? invoice.AMERP_Total_Paid_Amount__c : 0);
+                // -------------------------------------------------------
+                // FIX: Calculate historical amounts by summing only the
+                // payments created ON OR BEFORE this payment's CreatedDate.
+                // This prevents all receipts showing Balance Due = 0 because
+                // AMERP_Total_Paid_Amount__c always reflects the CURRENT total,
+                // not the total at the time this specific payment was made.
+                // -------------------------------------------------------
+                List<AMERP_Invoice_Payment__c> priorPayments = [
+                    SELECT Id, AMERP_Payment_Amount__c
+                    FROM AMERP_Invoice_Payment__c
+                    WHERE AMERP_Invoice__c = :invoice.Id
+                    AND CreatedDate <= :latestPayment.CreatedDate
+                    AND Id != :latestPayment.Id
+                ];
+
+                amountPaid = latestPayment.AMERP_Payment_Amount__c != null
+                             ? latestPayment.AMERP_Payment_Amount__c : 0;
+
+                amountPaidBeforeThis = 0;
+                for (AMERP_Invoice_Payment__c p : priorPayments) {
+                    amountPaidBeforeThis += (p.AMERP_Payment_Amount__c != null
+                                            ? p.AMERP_Payment_Amount__c : 0);
+                }
+
+                Decimal invoiceTotal = invoice.AMERP_Invoice_Amount__c != null
+                                       ? invoice.AMERP_Invoice_Amount__c : 0;
+
+                // Balance at the time THIS payment was made
+                balanceDue = invoiceTotal - amountPaidBeforeThis - amountPaid;
             }
         } catch (Exception e) {
             System.debug('Error loading payment receipt: ' + e.getMessage());
         }
     }
-    
+
     @AuraEnabled
     public static AMERP_Custom_Invoice__c getInvoiceByNumber(String invoiceNumber) {
         if (String.isBlank(invoiceNumber)) {
@@ -138,7 +163,6 @@ public without sharing class InvoicePaymentPortal {
         try {
             System.debug('Payment data received: ' + JSON.serialize(paymentData));
 
-            // Extract required fields from map
             String invoiceId = (String) paymentData.get('invoiceId');
             String customerId = (String) paymentData.get('customerId');
             String paymentMode = (String) paymentData.get('paymentMode');
@@ -149,7 +173,6 @@ public without sharing class InvoicePaymentPortal {
 
             System.debug('Extracted fields - InvoiceId: ' + invoiceId + ', CustomerId: ' + customerId + ', Mode: ' + paymentMode);
 
-            // Validate mandatory fields
             if (String.isBlank(invoiceId)) {
                 throw new AuraHandledException('Invoice ID is missing.');
             }
@@ -163,13 +186,11 @@ public without sharing class InvoicePaymentPortal {
                 throw new AuraHandledException('Payment amount must be greater than 0.');
             }
 
-            // Create payment record
             AMERP_Invoice_Payment__c payment = new AMERP_Invoice_Payment__c();
             payment.AMERP_Invoice__c = invoiceId;
             payment.AMERP_Customer__c = customerId;
             payment.AMERP_Payment_Amount__c = paymentAmount;
-            
-            // Parse payment date safely
+
             if (String.isNotBlank(paymentDate)) {
                 try {
                     payment.AMERP_Payment_Date__c = Date.valueOf(paymentDate);
@@ -180,7 +201,7 @@ public without sharing class InvoicePaymentPortal {
             } else {
                 payment.AMERP_Payment_Date__c = System.today();
             }
-            
+
             payment.AMERP_Payment_Mode__c = paymentMode;
             payment.AMERP_Payment_Status__c = 'Received';
             payment.AMERP_Transaction_Id__c = transactionId;
@@ -190,7 +211,6 @@ public without sharing class InvoicePaymentPortal {
 
             System.debug('Payment record before mode-specific fields: ' + JSON.serialize(payment));
 
-            // Set mode-specific fields
             if (paymentMode == 'UPI') {
                 payment.AMERP_UPI_Id__c = (String) paymentData.get('upiId');
                 payment.AMERP_UPI_App_Name__c = (String) paymentData.get('upiAppName');
@@ -209,7 +229,6 @@ public without sharing class InvoicePaymentPortal {
                 payment.AMERP_Card_Type__c = (String) paymentData.get('cardType');
                 payment.AMERP_Card_Holder_Name__c = (String) paymentData.get('cardHolderName');
                 String cardNumber = (String) paymentData.get('cardNumber');
-                // Store only last 4 digits for security
                 if (String.isNotBlank(cardNumber) && cardNumber.length() >= 4) {
                     payment.AMERP_Card_Number__c = cardNumber.substring(cardNumber.length() - 4);
                 }
@@ -218,10 +237,10 @@ public without sharing class InvoicePaymentPortal {
 
             System.debug('Final payment record: ' + JSON.serialize(payment));
 
-            // Insert record
             insert payment;
             System.debug('Payment record created with ID: ' + payment.Id);
             return payment.Id;
+
         } catch (AuraHandledException ahe) {
             System.debug('AuraHandledException: ' + ahe.getMessage());
             throw ahe;

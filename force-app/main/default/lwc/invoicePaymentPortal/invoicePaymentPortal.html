@@ -1,31 +1,41 @@
 <template>
-    <lightning-card title="Invoice Payment Portal" icon-name="standard:invoice">
+    <lightning-card>
 
-        <!-- Search Section (hidden if auto-loaded from URL) -->
+        <!-- ══════════════════════════════════════════ -->
+        <!-- SEARCH SECTION -->
+        <!-- ══════════════════════════════════════════ -->
         <template if:false={autoLoadedFromUrl}>
-            <div class="slds-p-around_medium search-section">
-                <div class="slds-grid slds-wrap slds-gutters slds-grid_align-center">
-                    <div class="slds-col slds-size_1-of-1 slds-medium-size_8-of-12">
-                        <lightning-input
-                            type="text"
-                            label="Enter Invoice Number"
-                            placeholder="e.g., INV-0001"
-                            value={invoiceNumber}
-                            onchange={handleInvoiceNumberChange}
-                            onkeypress={handleKeyPress}
-                        ></lightning-input>
+            <div class="search-wrapper">
+                <div class="search-inner">
+                    <div class="search-logo">
+                        <span class="search-logo-icon">⚡</span>
+                        <span class="search-logo-text">Invoice Portal</span>
                     </div>
-                    <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-12 slds-p-top_large slds-grid slds-gutters">
+                    <p class="search-subtitle">Enter your invoice number to view details and make payments</p>
+                    <div class="search-bar-row">
+                        <div class="search-input-wrap">
+                            <span class="search-prefix-icon">🔍</span>
+                            <lightning-input
+                                type="text"
+                                label=""
+                                placeholder="e.g., INV-0116"
+                                value={invoiceNumber}
+                                onchange={handleInvoiceNumberChange}
+                                onkeypress={handleKeyPress}
+                                class="search-input-field"
+                            ></lightning-input>
+                        </div>
                         <lightning-button
-                            label="Search"
+                            label="Search Invoice"
                             onclick={handleSearch}
                             variant="brand"
-                            class="slds-m-right_small"
+                            class="search-btn"
                         ></lightning-button>
                         <lightning-button
                             label="Clear"
                             onclick={handleClear}
                             variant="neutral"
+                            class="clear-btn"
                         ></lightning-button>
                     </div>
                 </div>
@@ -34,206 +44,164 @@
 
         <!-- Loading Spinner -->
         <template if:true={isLoading}>
-            <div class="slds-is-relative" style="height: 100px;">
+            <div class="spinner-wrapper">
                 <lightning-spinner alternative-text="Loading invoice..." size="medium"></lightning-spinner>
             </div>
         </template>
 
         <!-- Error Message -->
         <template if:true={errorMessage}>
-            <div class="slds-p-around_medium">
-                <div class="error-alert" role="alert">
-                    <p>{errorMessage}</p>
-                </div>
+            <div class="alert-error">
+                <span class="alert-icon">⚠️</span>
+                <p>{errorMessage}</p>
             </div>
         </template>
 
-        <!-- Invoice Details -->
+        <!-- ══════════════════════════════════════════ -->
+        <!-- INVOICE DETAILS VIEW -->
+        <!-- ══════════════════════════════════════════ -->
         <template if:true={invoiceRecord}>
-            <div class="slds-p-around_medium">
+            <div class="portal-body">
 
-                <!-- Account Info Section -->
-                <div class="info-section slds-m-bottom_medium">
-                    <div class="section-header">
-                        <span class="section-icon">🏦</span>
-                        <span class="section-title">Account Info</span>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-grid">
-                            <div class="info-field">
-                                <span class="field-label">Invoice Number</span>
-                                <span class="field-value highlight-orange">{invoiceRecord.Name}</span>
+                <!-- TOP ROW: Account Info + Financial Overview -->
+                <div class="top-row">
+
+                    <!-- Account Information Card -->
+                    <div class="card account-card">
+                        <div class="card-header">
+                            <span class="card-header-icon">ℹ️</span>
+                            <span class="card-header-title">Account Information</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="acct-field">
+                                <span class="acct-label">INVOICE NUMBER</span>
+                                <span class="acct-value invoice-num">{invoiceRecord.Name}</span>
                             </div>
-                            <div class="info-field">
-                                <span class="field-label">Date</span>
-                                <span class="field-value">{formattedInvoiceDate}</span>
+                            <div class="acct-dates-row">
+                                <div class="acct-field">
+                                    <span class="acct-label">DATE</span>
+                                    <span class="acct-value">{formattedInvoiceDate}</span>
+                                </div>
+                                <div class="acct-field">
+                                    <span class="acct-label">DUE DATE</span>
+                                    <span class="acct-value due-date">{formattedDueDate}</span>
+                                </div>
                             </div>
-                            <div class="info-field">
-                                <span class="field-label">Due Date</span>
-                                <span class="field-value">{formattedDueDate}</span>
-                            </div>
-                            <div class="info-field">
-                                <span class="field-label">Customer</span>
-                                <span class="field-value bold">
+                            <div class="acct-field">
+                                <span class="acct-label">CUSTOMER</span>
+                                <span class="acct-value customer-name">
                                     <template if:true={invoiceRecord.AMERP_Customer__r}>
                                         {invoiceRecord.AMERP_Customer__r.Name}
                                     </template>
                                     <template if:false={invoiceRecord.AMERP_Customer__r}>—</template>
                                 </span>
                             </div>
-                            <div class="info-field">
-                                <span class="field-label">Contact</span>
-                                <span class="field-value bold">
-                                    <template if:true={invoiceRecord.Contact__r}>
-                                        {invoiceRecord.Contact__r.Name}
-                                    </template>
-                                    <template if:false={invoiceRecord.Contact__r}>—</template>
-                                </span>
+                            <template if:true={invoiceRecord.Contact__r}>
+                                <div class="acct-field">
+                                    <span class="acct-label">CONTACT</span>
+                                    <span class="acct-value contact-val">{invoiceRecord.Contact__r.Name}</span>
+                                </div>
+                            </template>
+                            <div class="acct-field">
+                                <span class="acct-label">CURRENCY</span>
+                                <span class="acct-value">{invoiceRecord.CurrencyIsoCode}</span>
                             </div>
-                            <!-- <div class="info-field">
-                                <span class="field-label">Vendor</span>
-                                <span class="field-value highlight-orange">
-                                    <template if:true={invoiceRecord.AMERP_Vendor__r}>
-                                        {invoiceRecord.AMERP_Vendor__r.Name}
-                                    </template>
-                                    <template if:false={invoiceRecord.AMERP_Vendor__r}>—</template>
-                                </span>
-                            </div> -->
                         </div>
                     </div>
+
+                    <!-- Financial Overview Card -->
+                    <div class="card financial-card">
+                        <div class="card-header">
+                            <span class="card-header-icon">💳</span>
+                            <span class="card-header-title">Financial Overview</span>
+                            <span class="payment-status-pill">{invoiceRecord.AMERP_Payment_Status__c}</span>
+                        </div>
+                        <div class="card-body">
+
+                            <!-- Three financial metrics -->
+                            <div class="fin-metrics-row">
+                                <div class="fin-metric">
+                                    <span class="fin-metric-label">Invoice Amount</span>
+                                    <span class="fin-metric-value neutral">{formattedInvoiceAmount}</span>
+                                </div>
+                                <div class="fin-metric fin-metric-green">
+                                    <span class="fin-metric-label">Total Paid</span>
+                                    <span class="fin-metric-value green">{formattedPaidAmount}</span>
+                                </div>
+                                <div class="fin-metric fin-metric-blue">
+                                    <span class="fin-metric-label">Balance Amount</span>
+                                    <span class="fin-metric-value blue">{formattedBalanceAmount}</span>
+                                </div>
+                            </div>
+
+                            <!-- Progress bar -->
+                            <div class="progress-section">
+                                <div class="progress-label-row">
+                                    <span class="progress-label">PAYMENT PROGRESS</span>
+                                    <span class="progress-pct">{paymentProgressLabel}</span>
+                                </div>
+                                <div class="progress-track">
+                                    <div class="progress-fill" style={progressBarStyle}></div>
+                                </div>
+                            </div>
+
+                            <!-- Outstanding Amount dark banner -->
+                            <div class="outstanding-banner">
+                                <div class="outstanding-inner">
+                                    <span class="outstanding-label">TOTAL OUTSTANDING AMOUNT</span>
+                                    <span class="outstanding-value">{formattedOutstandingAmount}</span>
+                                </div>
+                                <span class="outstanding-icon">🏦</span>
+                            </div>
+
+                        </div>
+                    </div>
+
                 </div>
 
-                <!-- Payment Information Section -->
-                <div class="info-section slds-m-bottom_medium">
-                    <div class="section-header">
-                        <span class="section-icon">💳</span>
-                        <span class="section-title">Payment Information</span>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-grid">
-                            <div class="info-field">
-                                <span class="field-label">Invoice Amount</span>
-                                <span class="field-value bold">{formattedInvoiceAmount}</span>
-                            </div>
-                            <!-- <div class="info-field">
-                                <span class="field-label">Total Amount</span>
-                                <span class="field-value bold">{formattedTotalAmount}</span>
-                            </div> -->
-                            <div class="info-field">
-                                <span class="field-label">Total Paid Amount</span>
-                                <span class="field-value highlight-green">{formattedPaidAmount}</span>
-                            </div>
-                            <div class="info-field">
-                                <span class="field-label">Balance Amount</span>
-                                <span class="field-value bold">{formattedBalanceAmount}</span>
-                            </div>
-                            <div class="info-field">
-                                <span class="field-label">Outstanding Amount</span>
-                                <span class="field-value highlight-orange">{formattedOutstandingAmount}</span>
-                            </div>
-                            <div class="info-field">
-                                <span class="field-label">Status</span>
-                                <span class="status-badge">{invoiceRecord.AMERP_Payment_Status__c}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- References Section -->
-                <!-- <div class="info-section slds-m-bottom_medium">
-                    <div class="section-header">
-                        <span class="section-icon">🔗</span>
-                        <span class="section-title">References</span>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-grid">
-                            <div class="info-field">
-                                <span class="field-label">Order</span>
-                                <span class="field-value">
-                                    <template if:true={invoiceRecord.AMERP_Order__r}>
-                                        {invoiceRecord.AMERP_Order__r.Name}
-                                    </template>
-                                    <template if:false={invoiceRecord.AMERP_Order__r}>—</template>
-                                </span>
-                            </div>
-                            <div class="info-field">
-                                <span class="field-label">Purchase Order</span>
-                                <span class="field-value">
-                                    <template if:true={invoiceRecord.AMERP_Purchase_Order__r}>
-                                        {invoiceRecord.AMERP_Purchase_Order__r.Name}
-                                    </template>
-                                    <template if:false={invoiceRecord.AMERP_Purchase_Order__r}>—</template>
-                                </span>
-                            </div>
-                            <div class="info-field">
-                                <span class="field-label">GRN</span>
-                                <span class="field-value">
-                                    <template if:true={invoiceRecord.AMERP_GRN__r}>
-                                        {invoiceRecord.AMERP_GRN__r.Name}
-                                    </template>
-                                    <template if:false={invoiceRecord.AMERP_GRN__r}>—</template>
-                                </span>
-                            </div>
-                            <div class="info-field">
-                                <span class="field-label">Site</span>
-                                <span class="field-value">
-                                    <template if:true={invoiceRecord.AMERP_Site__r}>
-                                        {invoiceRecord.AMERP_Site__r.Name}
-                                    </template>
-                                    <template if:false={invoiceRecord.AMERP_Site__r}>—</template>
-                                </span>
-                            </div>
-                            <div class="info-field">
-                                <span class="field-label">Invoice Status</span>
-                                <span class="field-value">{invoiceRecord.AMERP_Status__c}</span>
-                            </div>
-                            <div class="info-field">
-                                <span class="field-label">Currency</span>
-                                <span class="field-value">{invoiceRecord.CurrencyIsoCode}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div> -->
-
-                <!-- Payment History Section -->
+                <!-- ══════════════════════════════════════════ -->
+                <!-- PAYMENT HISTORY -->
+                <!-- ══════════════════════════════════════════ -->
                 <template if:true={paymentHistory}>
-                    <div class="info-section slds-m-bottom_medium">
-                        <div class="section-header">
-                            <span class="section-icon">📋</span>
-                            <span class="section-title">Payment History</span>
+                    <div class="card history-card">
+                        <div class="card-header">
+                            <span class="card-header-icon">🔄</span>
+                            <span class="card-header-title">Payment History</span>
+                            <span class="history-count">{paymentHistory.length} Transaction(s)</span>
                         </div>
-                        <div class="info-card">
+                        <div class="card-body no-pad">
                             <template if:true={paymentHistory.length}>
-                                <div class="payment-history-table">
-                                    <table>
+                                <div class="history-table-wrap">
+                                    <table class="history-table">
                                         <thead>
-                                            <tr class="table-header-row">
-                                                <th>Date</th>
-                                                <th>Payment Mode</th>
-                                                <th>Transaction ID</th>
-                                                <th>Amount</th>
-                                                <th>Status</th>
-                                                <th>Action</th>
+                                            <tr>
+                                                <th>DATE</th>
+                                                <th>PAYMENT MODE</th>
+                                                <th>TRANSACTION ID</th>
+                                                <th>AMOUNT</th>
+                                                <th>STATUS</th>
+                                                <th>ACTION</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <template for:each={formattedPaymentHistory} for:item="payment">
-                                                <tr key={payment.Id} class="table-body-row">
+                                                <tr key={payment.Id} class="history-row">
                                                     <td>{payment.formattedDate}</td>
-                                                    <td>{payment.AMERP_Payment_Mode__c}</td>
-                                                    <td class="transaction-id">{payment.AMERP_Transaction_Id__c}</td>
-                                                    <td class="amount-cell">{payment.formattedAmount}</td>
                                                     <td>
-                                                        <span class="status-badge">{payment.AMERP_Payment_Status__c}</span>
+                                                        <span class="mode-chip">{payment.AMERP_Payment_Mode__c}</span>
+                                                    </td>
+                                                    <td class="txn-id-cell">{payment.AMERP_Transaction_Id__c}</td>
+                                                    <td class="amount-col">{payment.formattedAmount}</td>
+                                                    <td>
+                                                        <span class="status-chip status-success">{payment.AMERP_Payment_Status__c}</span>
                                                     </td>
                                                     <td>
                                                         <lightning-button
-                                                            label="Download Receipt"
+                                                            label="↓ Receipt"
                                                             variant="base"
-                                                            size="small"
                                                             onclick={downloadPaymentReceipt}
                                                             data-payment-id={payment.Id}
-                                                            class="receipt-button"
+                                                            class="receipt-dl-btn"
                                                         ></lightning-button>
                                                     </td>
                                                 </tr>
@@ -243,41 +211,44 @@
                                 </div>
                             </template>
                             <template if:false={paymentHistory.length}>
-                                <p class="no-data-message">No payments recorded yet.</p>
+                                <div class="empty-history">
+                                    <span class="empty-icon">📭</span>
+                                    <p>No payments recorded yet.</p>
+                                </div>
                             </template>
                         </div>
                     </div>
                 </template>
 
-                <!-- Remarks Section -->
+                <!-- Remarks -->
                 <template if:true={invoiceRecord.AMERP_Remarks__c}>
-                    <div class="info-section">
-                        <div class="section-header">
-                            <span class="section-icon">📝</span>
-                            <span class="section-title">Remarks</span>
+                    <div class="card remarks-card">
+                        <div class="card-header">
+                            <span class="card-header-icon">📝</span>
+                            <span class="card-header-title">Remarks</span>
                         </div>
-                        <div class="info-card">
+                        <div class="card-body">
                             <p class="remarks-text">{invoiceRecord.AMERP_Remarks__c}</p>
                         </div>
                     </div>
                 </template>
 
-                <!-- Make Payment Button and Search Another Button -->
-                <div class="slds-p-around_medium slds-text-align_center slds-m-top_large">
+                <!-- Bottom Action Bar -->
+                <div class="action-bar">
                     <template if:true={autoLoadedFromUrl}>
                         <lightning-button
-                            label="Search Another Invoice"
+                            label="🔍 Search Another Invoice"
                             variant="neutral"
                             onclick={handleSearchAnother}
-                            class="slds-m-right_small"
+                            class="action-secondary-btn"
                         ></lightning-button>
                     </template>
                     <template if:true={hasOutstanding}>
                         <lightning-button
-                            label="Make Payment"
-                            variant="success"
+                            label="💳 Make Payment"
+                            variant="brand"
                             onclick={handleMakePayment}
-                            class="pay-button"
+                            class="action-primary-btn"
                         ></lightning-button>
                     </template>
                 </div>
@@ -285,299 +256,335 @@
             </div>
         </template>
 
-        <!-- Payment Form Section -->
+        <!-- ══════════════════════════════════════════ -->
+        <!-- PAYMENT FORM -->
+        <!-- ══════════════════════════════════════════ -->
         <template if:true={showPaymentSection}>
-            <div class="payment-section slds-p-around_medium">
-                <h2 class="payment-header">💳 Make Payment</h2>
-                
-                <!-- Payment Error Message -->
+            <div class="payment-page">
+
+                <!-- Payment page header -->
+                <div class="pay-page-header">
+                    <div>
+                        <h2 class="pay-page-title">Make a Payment</h2>
+                        <p class="pay-page-sub">Invoice {invoiceRecord.Name} · Outstanding: {formattedOutstandingAmount}</p>
+                    </div>
+                    <lightning-button
+                        label="← Back"
+                        variant="neutral"
+                        onclick={handleCancelPayment}
+                        class="back-btn"
+                    ></lightning-button>
+                </div>
+
+                <!-- Payment Error -->
                 <template if:true={paymentErrorMessage}>
-                    <div class="slds-p-around_small slds-m-bottom_medium">
-                        <div class="error-alert" role="alert">
-                            <p>{paymentErrorMessage}</p>
-                        </div>
+                    <div class="alert-error">
+                        <span class="alert-icon">⚠️</span>
+                        <p>{paymentErrorMessage}</p>
                     </div>
                 </template>
 
-                <!-- Payment Mode Tabs -->
-                <div class="payment-mode-tabs slds-m-bottom_medium">
-                    <button
-                        class={upiTabClass}
-                        data-mode="UPI"
-                        onclick={handlePaymentModeSelect}
-                    >
-                        UPI
-                    </button>
-                    <button
-                        class={cashTabClass}
-                        data-mode="Cash"
-                        onclick={handlePaymentModeSelect}
-                    >
-                        Cash
-                    </button>
-                    <button
-                        class={bankTabClass}
-                        data-mode="Bank Transfer"
-                        onclick={handlePaymentModeSelect}
-                    >
-                        Bank Transfer
-                    </button>
-                    <button
-                        class={cardTabClass}
-                        data-mode="Card"
-                        onclick={handlePaymentModeSelect}
-                    >
-                        Card
-                    </button>
-                </div>
+                <!-- Two column layout: mode selector + form -->
+                <div class="pay-layout">
 
-                <!-- Payment Form Card -->
-                <div class="payment-form-card">
-                    <!-- Common Fields -->
-                    <div class="form-row">
-                        <div class="form-col">
-                            <lightning-input
-                                type="number"
-                                label="Payment Amount"
-                                value={paymentAmount}
-                                data-field="paymentAmount"
-                                onchange={handlePaymentFieldChange}
-                                step="0.01"
-                                min="0"
-                                required
-                            ></lightning-input>
-                        </div>
-                        <div class="form-col">
-                            <lightning-input
-                                type="date"
-                                label="Payment Date"
-                                value={paymentDate}
-                                data-field="paymentDate"
-                                onchange={handlePaymentFieldChange}
-                                required
-                            ></lightning-input>
+                    <!-- Left: Mode Selector -->
+                    <div class="pay-mode-panel">
+                        <p class="pay-mode-label">SELECT PAYMENT METHOD</p>
+                        <div class="pay-mode-list">
+                            <button class={upiTabClass} data-mode="UPI" onclick={handlePaymentModeSelect}>
+                                <span class="mode-btn-icon">📱</span>
+                                <span class="mode-btn-text">UPI</span>
+                                <span class="mode-btn-desc">GPay, PhonePe, Paytm</span>
+                            </button>
+                            <button class={cashTabClass} data-mode="Cash" onclick={handlePaymentModeSelect}>
+                                <span class="mode-btn-icon">💵</span>
+                                <span class="mode-btn-text">Cash</span>
+                                <span class="mode-btn-desc">Physical cash payment</span>
+                            </button>
+                            <button class={bankTabClass} data-mode="Bank Transfer" onclick={handlePaymentModeSelect}>
+                                <span class="mode-btn-icon">🏦</span>
+                                <span class="mode-btn-text">Bank Transfer</span>
+                                <span class="mode-btn-desc">NEFT / RTGS / IMPS</span>
+                            </button>
+                            <button class={cardTabClass} data-mode="Card" onclick={handlePaymentModeSelect}>
+                                <span class="mode-btn-icon">💳</span>
+                                <span class="mode-btn-text">Card</span>
+                                <span class="mode-btn-desc">Debit / Credit card</span>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- UPI Fields -->
-                    <template if:true={isUPIMode}>
-                        <div class="form-row">
-                            <div class="form-col">
-                                <lightning-input
-                                    type="text"
-                                    label="UPI ID"
-                                    placeholder="user@bank"
-                                    value={paymentData.upiId}
-                                    data-field="upiId"
-                                    onchange={handlePaymentFieldChange}
-                                    required
-                                ></lightning-input>
-                            </div>
-                            <div class="form-col">
-                                <lightning-input
-                                    type="text"
-                                    label="Name On UPI"
-                                    value={paymentData.nameOnUpi}
-                                    data-field="nameOnUpi"
-                                    onchange={handlePaymentFieldChange}
-                                    required
-                                ></lightning-input>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-col">
-                                <lightning-combobox
-                                    label="UPI App Name"
-                                    value={paymentData.upiAppName}
-                                    options={upiAppOptions}
-                                    data-field="upiAppName"
-                                    onchange={handlePaymentFieldChange}
-                                    required
-                                ></lightning-combobox>
-                            </div>
-                        </div>
-                    </template>
+                    <!-- Right: Form -->
+                    <div class="pay-form-panel">
+                        <div class="pay-form-card">
 
-                    <!-- Cash Fields -->
-                    <template if:true={isCashMode}>
-                        <div class="form-row">
-                            <div class="form-col">
-                                <lightning-input
-                                    type="text"
-                                    label="Cash Receipt Number"
-                                    value={paymentData.cashReceiptNumber}
-                                    data-field="cashReceiptNumber"
-                                    onchange={handlePaymentFieldChange}
-                                    required
-                                ></lightning-input>
+                            <!-- Amount + Date always visible -->
+                            <div class="pay-form-section">
+                                <p class="pay-form-section-title">Payment Details</p>
+                                <div class="pay-form-row">
+                                    <div class="pay-form-col">
+                                        <lightning-input
+                                            type="number"
+                                            label="Payment Amount (₹)"
+                                            value={paymentAmount}
+                                            data-field="paymentAmount"
+                                            onchange={handlePaymentFieldChange}
+                                            step="0.01"
+                                            min="0"
+                                            required
+                                        ></lightning-input>
+                                    </div>
+                                    <div class="pay-form-col">
+                                        <lightning-input
+                                            type="date"
+                                            label="Payment Date"
+                                            value={paymentDate}
+                                            data-field="paymentDate"
+                                            onchange={handlePaymentFieldChange}
+                                            required
+                                        ></lightning-input>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="form-col">
-                                <lightning-input
-                                    type="text"
-                                    label="Cash Received By"
-                                    value={paymentData.cashReceivedBy}
-                                    data-field="cashReceivedBy"
-                                    onchange={handlePaymentFieldChange}
-                                    required
-                                ></lightning-input>
-                            </div>
-                        </div>
-                    </template>
 
-                    <!-- Bank Transfer Fields -->
-                    <template if:true={isBankMode}>
-                        <div class="form-row">
-                            <div class="form-col">
-                                <lightning-input
-                                    type="text"
-                                    label="Bank Name"
-                                    value={paymentData.bankName}
-                                    data-field="bankName"
-                                    onchange={handlePaymentFieldChange}
-                                    required
-                                ></lightning-input>
-                            </div>
-                            <div class="form-col">
-                                <lightning-input
-                                    type="text"
-                                    label="Bank Account Number"
-                                    value={paymentData.bankAccountNumber}
-                                    data-field="bankAccountNumber"
-                                    onchange={handlePaymentFieldChange}
-                                    required
-                                ></lightning-input>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-col">
-                                <lightning-input
-                                    type="text"
-                                    label="IFSC Code"
-                                    placeholder="e.g., SBIN0001234"
-                                    value={paymentData.ifscCode}
-                                    data-field="ifscCode"
-                                    onchange={handlePaymentFieldChange}
-                                    required
-                                ></lightning-input>
-                            </div>
-                        </div>
-                    </template>
+                            <!-- UPI Fields -->
+                            <template if:true={isUPIMode}>
+                                <div class="pay-form-section">
+                                    <p class="pay-form-section-title">UPI Information</p>
+                                    <div class="pay-form-row">
+                                        <div class="pay-form-col">
+                                            <lightning-input
+                                                type="text"
+                                                label="UPI ID"
+                                                placeholder="user@bank"
+                                                value={paymentData.upiId}
+                                                data-field="upiId"
+                                                onchange={handlePaymentFieldChange}
+                                                required
+                                            ></lightning-input>
+                                        </div>
+                                        <div class="pay-form-col">
+                                            <lightning-input
+                                                type="text"
+                                                label="Name On UPI"
+                                                value={paymentData.nameOnUpi}
+                                                data-field="nameOnUpi"
+                                                onchange={handlePaymentFieldChange}
+                                                required
+                                            ></lightning-input>
+                                        </div>
+                                    </div>
+                                    <div class="pay-form-row">
+                                        <div class="pay-form-col">
+                                            <lightning-combobox
+                                                label="UPI App Name"
+                                                value={paymentData.upiAppName}
+                                                options={upiAppOptions}
+                                                data-field="upiAppName"
+                                                onchange={handlePaymentFieldChange}
+                                                required
+                                            ></lightning-combobox>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
 
-                    <!-- Card Fields -->
-                    <template if:true={isCardMode}>
-                        <div class="form-row">
-                            <div class="form-col">
-                                <lightning-combobox
-                                    label="Card Type"
-                                    value={paymentData.cardType}
-                                    options={cardTypeOptions}
-                                    data-field="cardType"
-                                    onchange={handlePaymentFieldChange}
-                                    required
-                                ></lightning-combobox>
-                            </div>
-                            <div class="form-col">
-                                <lightning-input
-                                    type="text"
-                                    label="Card Holder Name"
-                                    value={paymentData.cardHolderName}
-                                    data-field="cardHolderName"
-                                    onchange={handlePaymentFieldChange}
-                                    required
-                                ></lightning-input>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-col">
-                                <lightning-input
-                                    type="password"
-                                    label="Card Number (Last 4 digits)"
-                                    placeholder="e.g., 1234"
-                                    value={paymentData.cardNumber}
-                                    data-field="cardNumber"
-                                    onchange={handlePaymentFieldChange}
-                                    maxlength="4"
-                                    required
-                                ></lightning-input>
-                            </div>
-                        </div>
-                    </template>
+                            <!-- Cash Fields -->
+                            <template if:true={isCashMode}>
+                                <div class="pay-form-section">
+                                    <p class="pay-form-section-title">Cash Details</p>
+                                    <div class="pay-form-row">
+                                        <div class="pay-form-col">
+                                            <lightning-input
+                                                type="text"
+                                                label="Cash Receipt Number"
+                                                value={paymentData.cashReceiptNumber}
+                                                data-field="cashReceiptNumber"
+                                                onchange={handlePaymentFieldChange}
+                                                required
+                                            ></lightning-input>
+                                        </div>
+                                        <div class="pay-form-col">
+                                            <lightning-input
+                                                type="text"
+                                                label="Cash Received By"
+                                                value={paymentData.cashReceivedBy}
+                                                data-field="cashReceivedBy"
+                                                onchange={handlePaymentFieldChange}
+                                                required
+                                            ></lightning-input>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
 
-                    <!-- Form Buttons -->
-                    <div class="form-buttons slds-m-top_large">
-                        <template if:true={isPaymentLoading}>
-                            <lightning-spinner alternative-text="Processing payment..." size="small"></lightning-spinner>
-                        </template>
-                        <template if:false={isPaymentLoading}>
-                            <lightning-button
-                                label="Pay Now"
-                                variant="success"
-                                onclick={handlePayNow}
-                                class="slds-m-right_small"
-                            ></lightning-button>
-                            <lightning-button
-                                label="Cancel"
-                                variant="neutral"
-                                onclick={handleCancelPayment}
-                            ></lightning-button>
-                        </template>
+                            <!-- Bank Transfer Fields -->
+                            <template if:true={isBankMode}>
+                                <div class="pay-form-section">
+                                    <p class="pay-form-section-title">Bank Details</p>
+                                    <div class="pay-form-row">
+                                        <div class="pay-form-col">
+                                            <lightning-input
+                                                type="text"
+                                                label="Bank Name"
+                                                value={paymentData.bankName}
+                                                data-field="bankName"
+                                                onchange={handlePaymentFieldChange}
+                                                required
+                                            ></lightning-input>
+                                        </div>
+                                        <div class="pay-form-col">
+                                            <lightning-input
+                                                type="text"
+                                                label="Account Number"
+                                                value={paymentData.bankAccountNumber}
+                                                data-field="bankAccountNumber"
+                                                onchange={handlePaymentFieldChange}
+                                                required
+                                            ></lightning-input>
+                                        </div>
+                                    </div>
+                                    <div class="pay-form-row">
+                                        <div class="pay-form-col">
+                                            <lightning-input
+                                                type="text"
+                                                label="IFSC Code"
+                                                placeholder="e.g., SBIN0001234"
+                                                value={paymentData.ifscCode}
+                                                data-field="ifscCode"
+                                                onchange={handlePaymentFieldChange}
+                                                required
+                                            ></lightning-input>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Card Fields -->
+                            <template if:true={isCardMode}>
+                                <div class="pay-form-section">
+                                    <p class="pay-form-section-title">Card Details</p>
+                                    <div class="pay-form-row">
+                                        <div class="pay-form-col">
+                                            <lightning-combobox
+                                                label="Card Type"
+                                                value={paymentData.cardType}
+                                                options={cardTypeOptions}
+                                                data-field="cardType"
+                                                onchange={handlePaymentFieldChange}
+                                                required
+                                            ></lightning-combobox>
+                                        </div>
+                                        <div class="pay-form-col">
+                                            <lightning-input
+                                                type="text"
+                                                label="Card Holder Name"
+                                                value={paymentData.cardHolderName}
+                                                data-field="cardHolderName"
+                                                onchange={handlePaymentFieldChange}
+                                                required
+                                            ></lightning-input>
+                                        </div>
+                                    </div>
+                                    <div class="pay-form-row">
+                                        <div class="pay-form-col">
+                                            <lightning-input
+                                                type="password"
+                                                label="Last 4 Digits of Card"
+                                                placeholder="e.g., 1234"
+                                                value={paymentData.cardNumber}
+                                                data-field="cardNumber"
+                                                onchange={handlePaymentFieldChange}
+                                                maxlength="4"
+                                                required
+                                            ></lightning-input>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Submit Row -->
+                            <div class="pay-form-submit-row">
+                                <template if:true={isPaymentLoading}>
+                                    <div class="spinner-wrapper-sm">
+                                        <lightning-spinner alternative-text="Processing payment..." size="small"></lightning-spinner>
+                                    </div>
+                                </template>
+                                <template if:false={isPaymentLoading}>
+                                    <lightning-button
+                                        label="Pay Now →"
+                                        variant="brand"
+                                        onclick={handlePayNow}
+                                        class="pay-now-btn"
+                                    ></lightning-button>
+                                    <lightning-button
+                                        label="Cancel"
+                                        variant="neutral"
+                                        onclick={handleCancelPayment}
+                                        class="cancel-pay-btn"
+                                    ></lightning-button>
+                                </template>
+                            </div>
+
+                        </div>
                     </div>
+
                 </div>
             </div>
         </template>
 
-        <!-- Success Screen -->
+        <!-- ══════════════════════════════════════════ -->
+        <!-- SUCCESS SCREEN -->
+        <!-- ══════════════════════════════════════════ -->
         <template if:true={showSuccessScreen}>
-            <div class="success-screen slds-p-around_large">
-                <div class="success-container">
-                    <div class="success-icon">✅</div>
+            <div class="success-page">
+                <div class="success-box">
+                    <div class="success-checkmark">✓</div>
                     <h2 class="success-title">Payment Successful!</h2>
-                    
-                    <div class="success-card">
-                        <div class="success-summary">
-                            <div class="success-row">
-                                <span class="success-label">Amount:</span>
-                                <span class="success-value">{formattedPaymentAmount}</span>
-                            </div>
-                            <div class="success-row">
-                                <span class="success-label">Payment Mode:</span>
-                                <span class="success-value">{selectedPaymentMode}</span>
-                            </div>
-                            <div class="success-row">
-                                <span class="success-label">Date:</span>
-                                <span class="success-value">{formattedPaymentDate}</span>
-                            </div>
-                            <div class="success-row">
-                                <span class="success-label">Transaction ID:</span>
-                                <span class="success-value transaction-id">{generatedTransactionId}</span>
-                            </div>
+                    <p class="success-sub">Your payment has been recorded and confirmed.</p>
+
+                    <div class="success-details-card">
+                        <div class="success-detail-row">
+                            <span class="success-detail-label">Amount Paid</span>
+                            <span class="success-detail-value green-val">{formattedPaymentAmount}</span>
+                        </div>
+                        <div class="success-detail-row">
+                            <span class="success-detail-label">Payment Mode</span>
+                            <span class="success-detail-value">{selectedPaymentMode}</span>
+                        </div>
+                        <div class="success-detail-row">
+                            <span class="success-detail-label">Date</span>
+                            <span class="success-detail-value">{formattedPaymentDate}</span>
+                        </div>
+                        <div class="success-detail-row">
+                            <span class="success-detail-label">Transaction ID</span>
+                            <span class="success-detail-value txn-mono">{generatedTransactionId}</span>
                         </div>
                     </div>
 
-                    <!-- Updated Invoice Information -->
                     <template if:true={invoiceRecord}>
-                        <div class="success-updated-info">
-                            <h3 class="success-subheader">Updated Invoice Information</h3>
-                            <div class="updated-info-row">
-                                <span class="success-label">Total Paid Amount:</span>
-                                <span class="success-value">{formattedPaidAmount}</span>
+                        <div class="success-invoice-summary">
+                            <p class="success-summary-title">Updated Invoice Summary</p>
+                            <div class="success-detail-row">
+                                <span class="success-detail-label">Total Paid</span>
+                                <span class="success-detail-value">{formattedPaidAmount}</span>
                             </div>
-                            <div class="updated-info-row">
-                                <span class="success-label">Outstanding Amount:</span>
-                                <span class="success-value">{formattedOutstandingAmount}</span>
+                            <div class="success-detail-row">
+                                <span class="success-detail-label">Outstanding</span>
+                                <span class="success-detail-value">{formattedOutstandingAmount}</span>
                             </div>
-                            <div class="updated-info-row">
-                                <span class="success-label">Balance Amount:</span>
-                                <span class="success-value">{formattedBalanceAmount}</span>
+                            <div class="success-detail-row">
+                                <span class="success-detail-label">Balance</span>
+                                <span class="success-detail-value">{formattedBalanceAmount}</span>
                             </div>
                         </div>
                     </template>
 
                     <lightning-button
-                        label="Search Another Invoice"
+                        label="🔍 Search Another Invoice"
                         variant="brand"
                         onclick={handleSearchAnother}
-                        class="success-button"
+                        class="success-cta-btn"
                     ></lightning-button>
                 </div>
             </div>
