@@ -1,0 +1,213 @@
+<template>
+    <lightning-card title="Invoice Payment Portal" icon-name="standard:invoice">
+
+        <!-- Search Section -->
+        <div class="slds-p-around_medium search-section">
+            <div class="slds-grid slds-wrap slds-gutters slds-grid_align-center">
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_8-of-12">
+                    <lightning-input
+                        type="text"
+                        label="Enter Invoice Number"
+                        placeholder="e.g., INV-0001"
+                        value={invoiceNumber}
+                        onchange={handleInvoiceNumberChange}
+                        onkeypress={handleKeyPress}
+                    ></lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-12 slds-p-top_large slds-grid slds-gutters">
+                    <lightning-button
+                        label="Search"
+                        onclick={handleSearch}
+                        variant="brand"
+                        class="slds-m-right_small"
+                    ></lightning-button>
+                    <lightning-button
+                        label="Clear"
+                        onclick={handleClear}
+                        variant="neutral"
+                    ></lightning-button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <template if:true={isLoading}>
+            <div class="slds-is-relative" style="height: 100px;">
+                <lightning-spinner alternative-text="Loading invoice..." size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Error Message -->
+        <template if:true={errorMessage}>
+            <div class="slds-p-around_medium">
+                <div class="error-alert" role="alert">
+                    <p>{errorMessage}</p>
+                </div>
+            </div>
+        </template>
+
+        <!-- Invoice Details -->
+        <template if:true={invoiceRecord}>
+            <div class="slds-p-around_medium">
+
+                <!-- Account Info Section -->
+                <div class="info-section slds-m-bottom_medium">
+                    <div class="section-header">
+                        <span class="section-icon">🏦</span>
+                        <span class="section-title">Account Info</span>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-grid">
+                            <div class="info-field">
+                                <span class="field-label">Invoice Number</span>
+                                <span class="field-value highlight-orange">{invoiceRecord.Name}</span>
+                            </div>
+                            <div class="info-field">
+                                <span class="field-label">Date</span>
+                                <span class="field-value">{formattedInvoiceDate}</span>
+                            </div>
+                            <div class="info-field">
+                                <span class="field-label">Due Date</span>
+                                <span class="field-value">{formattedDueDate}</span>
+                            </div>
+                            <div class="info-field">
+                                <span class="field-label">Customer</span>
+                                <span class="field-value bold">
+                                    <template if:true={invoiceRecord.AMERP_Customer__r}>
+                                        {invoiceRecord.AMERP_Customer__r.Name}
+                                    </template>
+                                    <template if:false={invoiceRecord.AMERP_Customer__r}>—</template>
+                                </span>
+                            </div>
+                            <div class="info-field">
+                                <span class="field-label">Contact</span>
+                                <span class="field-value bold">
+                                    <template if:true={invoiceRecord.Contact__r}>
+                                        {invoiceRecord.Contact__r.Name}
+                                    </template>
+                                    <template if:false={invoiceRecord.Contact__r}>—</template>
+                                </span>
+                            </div>
+                            <div class="info-field">
+                                <span class="field-label">Vendor</span>
+                                <span class="field-value highlight-orange">
+                                    <template if:true={invoiceRecord.AMERP_Vendor__r}>
+                                        {invoiceRecord.AMERP_Vendor__r.Name}
+                                    </template>
+                                    <template if:false={invoiceRecord.AMERP_Vendor__r}>—</template>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Information Section -->
+                <div class="info-section slds-m-bottom_medium">
+                    <div class="section-header">
+                        <span class="section-icon">💳</span>
+                        <span class="section-title">Payment Information</span>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-grid">
+                            <div class="info-field">
+                                <span class="field-label">Invoice Amount</span>
+                                <span class="field-value bold">{formattedInvoiceAmount}</span>
+                            </div>
+                            <div class="info-field">
+                                <span class="field-label">Total Amount</span>
+                                <span class="field-value bold">{formattedTotalAmount}</span>
+                            </div>
+                            <div class="info-field">
+                                <span class="field-label">Total Paid Amount</span>
+                                <span class="field-value highlight-green">{formattedPaidAmount}</span>
+                            </div>
+                            <div class="info-field">
+                                <span class="field-label">Balance Amount</span>
+                                <span class="field-value bold">{formattedBalanceAmount}</span>
+                            </div>
+                            <div class="info-field">
+                                <span class="field-label">Outstanding Amount</span>
+                                <span class="field-value highlight-orange">{formattedOutstandingAmount}</span>
+                            </div>
+                            <div class="info-field">
+                                <span class="field-label">Status</span>
+                                <span class="status-badge">{invoiceRecord.AMERP_Payment_Status__c}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- References Section -->
+                <!-- <div class="info-section slds-m-bottom_medium">
+                    <div class="section-header">
+                        <span class="section-icon">🔗</span>
+                        <span class="section-title">References</span>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-grid">
+                            <div class="info-field">
+                                <span class="field-label">Order</span>
+                                <span class="field-value">
+                                    <template if:true={invoiceRecord.AMERP_Order__r}>
+                                        {invoiceRecord.AMERP_Order__r.Name}
+                                    </template>
+                                    <template if:false={invoiceRecord.AMERP_Order__r}>—</template>
+                                </span>
+                            </div>
+                            <div class="info-field">
+                                <span class="field-label">Purchase Order</span>
+                                <span class="field-value">
+                                    <template if:true={invoiceRecord.AMERP_Purchase_Order__r}>
+                                        {invoiceRecord.AMERP_Purchase_Order__r.Name}
+                                    </template>
+                                    <template if:false={invoiceRecord.AMERP_Purchase_Order__r}>—</template>
+                                </span>
+                            </div>
+                            <div class="info-field">
+                                <span class="field-label">GRN</span>
+                                <span class="field-value">
+                                    <template if:true={invoiceRecord.AMERP_GRN__r}>
+                                        {invoiceRecord.AMERP_GRN__r.Name}
+                                    </template>
+                                    <template if:false={invoiceRecord.AMERP_GRN__r}>—</template>
+                                </span>
+                            </div>
+                            <div class="info-field">
+                                <span class="field-label">Site</span>
+                                <span class="field-value">
+                                    <template if:true={invoiceRecord.AMERP_Site__r}>
+                                        {invoiceRecord.AMERP_Site__r.Name}
+                                    </template>
+                                    <template if:false={invoiceRecord.AMERP_Site__r}>—</template>
+                                </span>
+                            </div>
+                            <div class="info-field">
+                                <span class="field-label">Invoice Status</span>
+                                <span class="field-value">{invoiceRecord.AMERP_Status__c}</span>
+                            </div>
+                            <div class="info-field">
+                                <span class="field-label">Currency</span>
+                                <span class="field-value">{invoiceRecord.CurrencyIsoCode}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div> -->
+
+                <!-- Remarks Section -->
+                <template if:true={invoiceRecord.AMERP_Remarks__c}>
+                    <div class="info-section">
+                        <div class="section-header">
+                            <span class="section-icon">📝</span>
+                            <span class="section-title">Remarks</span>
+                        </div>
+                        <div class="info-card">
+                            <p class="remarks-text">{invoiceRecord.AMERP_Remarks__c}</p>
+                        </div>
+                    </div>
+                </template>
+
+            </div>
+        </template>
+
+    </lightning-card>
+</template>
